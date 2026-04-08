@@ -55,5 +55,6 @@ CREATE OR REPLACE VIEW public_profiles AS
 SELECT
   id,
   pseudo,
-  streak
+  streak,
+  epicoins
 FROM users;

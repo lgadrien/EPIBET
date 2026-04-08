@@ -1,6 +1,6 @@
 -- ========================================================
 -- 00_GLOBAL_TABLE_SETUP.SQL
--- Ce script regroupe l'intégralité du schéma de la base de données
+-- Version Master : Système Auth, Streaks, Paris et Bonus
 -- ========================================================
 
 -- RÉINITIALISATION --
@@ -10,13 +10,13 @@ DROP TABLE IF EXISTS events CASCADE;
 DROP TABLE IF EXISTS users CASCADE;
 DROP VIEW IF EXISTS public_profiles CASCADE;
 DROP FUNCTION IF EXISTS place_bet;
-DROP FUNCTION IF EXISTS claim_daily_bonus;
+DROP FUNCTION IF EXISTS handle_new_user CASCADE;
+DROP FUNCTION IF EXISTS proc_daily_streak_update CASCADE;
 
 -- ==========================================
 -- 1. TABLES DE BASE
 -- ==========================================
 
--- Table USERS
 CREATE TABLE users (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_type TEXT DEFAULT 'user' NOT NULL CHECK (user_type IN ('user', 'admin')),
@@ -24,46 +24,43 @@ CREATE TABLE users (
   prénom TEXT NOT NULL,
   pseudo TEXT UNIQUE NOT NULL,
   email TEXT UNIQUE NOT NULL,
-  password TEXT NOT NULL,
+  password TEXT, -- Optionnel car géré par Supabase Auth
   registration_date TIMESTAMPTZ DEFAULT NOW() NOT NULL,
   last_logged_in TIMESTAMPTZ,
   account_status TEXT DEFAULT 'active' NOT NULL CHECK (account_status IN ('active', 'inactive', 'banned')),
-  epicoins INTEGER DEFAULT 0 NOT NULL CHECK (epicoins >= 0),
+  epicoins INTEGER DEFAULT 1000 NOT NULL CHECK (epicoins >= 0),
   streak INTEGER DEFAULT 0 NOT NULL CHECK (streak >= 0)
 );
 
--- Table EVENTS
 CREATE TABLE events (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  title TEXT NOT NULL, -- Ex: "Finale Worlds LoL 2026", "Vainqueur Koh-Lanta"
-  description TEXT, -- Pour donner du contexte au pari fun
-  category TEXT NOT NULL, -- Ex: 'sport', 'esport', 'fun', 'politique'
+  title TEXT NOT NULL,
+  description TEXT,
+  category TEXT NOT NULL,
   start_time TIMESTAMPTZ NOT NULL,
   status TEXT DEFAULT 'scheduled' NOT NULL CHECK (status IN ('scheduled', 'in_progress', 'finished', 'cancelled'))
 );
 
--- Table ODDS
 CREATE TABLE odds (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   event_id UUID NOT NULL REFERENCES events(id) ON DELETE CASCADE,
-  option_name TEXT NOT NULL, -- Ex: "T1", "Fnatic", "Rouge", "Denis Brogniart"
-  multiplier DECIMAL(5,2) NOT NULL CHECK (multiplier > 1.0), -- La cote
-  UNIQUE(event_id, option_name) -- Empêche les doublons pour un même événement
+  option_name TEXT NOT NULL,
+  multiplier DECIMAL(5,2) NOT NULL CHECK (multiplier > 1.0),
+  UNIQUE(event_id, option_name)
 );
 
--- Table BETS
 CREATE TABLE bets (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
   odd_id UUID NOT NULL REFERENCES odds(id) ON DELETE RESTRICT,
-  amount_wagered INTEGER NOT NULL CHECK (amount_wagered > 0), -- La mise en epicoins
-  locked_multiplier DECIMAL(5,2) NOT NULL, -- CRUCIAL : La cote au moment précisément du pari
+  amount_wagered INTEGER NOT NULL CHECK (amount_wagered > 0),
+  locked_multiplier DECIMAL(5,2) NOT NULL,
   status TEXT DEFAULT 'pending' NOT NULL CHECK (status IN ('pending', 'won', 'lost', 'refunded')),
   placed_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
 );
 
 -- ==========================================
--- 2. SÉCURITÉ (RLS & POLICIES)
+-- 2. SÉCURITÉ & VUES
 -- ==========================================
 
 ALTER TABLE users ENABLE ROW LEVEL SECURITY;
@@ -71,24 +68,84 @@ ALTER TABLE events ENABLE ROW LEVEL SECURITY;
 ALTER TABLE odds ENABLE ROW LEVEL SECURITY;
 ALTER TABLE bets ENABLE ROW LEVEL SECURITY;
 
--- Nettoyage des anciennes règles
-DROP POLICY IF EXISTS "Les utilisateurs voient leur propre profil" ON users;
-DROP POLICY IF EXISTS "Événements visibles par tous" ON events;
-DROP POLICY IF EXISTS "Cotes visibles par tous" ON odds;
-DROP POLICY IF EXISTS "Paris visibles par tous" ON bets;
-
--- Politiques de lecture
 CREATE POLICY "Les utilisateurs voient leur propre profil" ON users FOR SELECT USING ( auth.uid() = id );
 CREATE POLICY "Événements visibles par tous" ON events FOR SELECT USING ( true );
 CREATE POLICY "Cotes visibles par tous" ON odds FOR SELECT USING ( true );
 CREATE POLICY "Paris visibles par tous" ON bets FOR SELECT USING ( true );
 
--- Vue publique pour les profils (vitrine)
+-- Vue pour le classement (Leaderboard)
 CREATE OR REPLACE VIEW public_profiles AS
-SELECT id, pseudo, streak FROM users;
+SELECT id, pseudo, streak, epicoins FROM users;
 
 -- ==========================================
--- 3. FONCTIONS (RPC)
+-- 3. SYNCHRONISATION AUTOMATIQUE (TRIGGER)
+-- ==========================================
+
+-- Fonction pour créer l'utilisateur public après inscription Auth
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS trigger AS $$
+BEGIN
+  INSERT INTO public.users (id, nom, prénom, pseudo, email, password, epicoins, streak, last_logged_in)
+  VALUES (
+    new.id,
+    COALESCE(new.raw_user_meta_data->>'nom', 'Utilisateur'),
+    COALESCE(new.raw_user_meta_data->>'prenom', 'Nouveau'),
+    COALESCE(new.raw_user_meta_data->>'pseudo', 'user_' || substr(new.id::text, 1, 8)),
+    new.email,
+    'managed-by-supabase-auth',
+    1000, -- Bonus de bienvenue
+    1,    -- Streak commence à 1
+    NOW()
+  );
+  RETURN new;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+
+-- ==========================================
+-- 4. SYSTÈME DE STREAK AUTOMATIQUE AU LOGIN
+-- ==========================================
+
+CREATE OR REPLACE FUNCTION public.proc_daily_streak_update()
+RETURNS trigger AS $$
+DECLARE
+  v_last_login TIMESTAMPTZ;
+  v_current_streak INTEGER;
+  v_days_diff INTEGER;
+  v_reward INTEGER := 100;
+BEGIN
+  SELECT last_logged_in, streak INTO v_last_login, v_current_streak
+  FROM public.users WHERE id = new.id;
+
+  IF NOT FOUND THEN RETURN new; END IF;
+
+  v_days_diff := (NOW() AT TIME ZONE 'UTC')::DATE - (v_last_login AT TIME ZONE 'UTC')::DATE;
+
+  IF v_days_diff = 1 THEN
+    -- Suite de la série
+    UPDATE public.users SET streak = streak + 1, epicoins = epicoins + v_reward WHERE id = new.id;
+  ELSIF v_days_diff > 1 THEN
+    -- Série brisée
+    UPDATE public.users SET streak = 1, epicoins = epicoins + v_reward WHERE id = new.id;
+  END IF;
+
+  -- On met à jour la date de connexion dans TOUS les cas (même si v_days_diff = 0)
+  UPDATE public.users SET last_logged_in = NOW() WHERE id = new.id;
+
+  RETURN new;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE TRIGGER tr_on_auth_login
+  AFTER UPDATE OF last_sign_in_at ON auth.users
+  FOR EACH ROW
+  EXECUTE FUNCTION public.proc_daily_streak_update();
+
+-- ==========================================
+-- 5. FONCTIONS MÉTIER (PARIS)
 -- ==========================================
 
 CREATE OR REPLACE FUNCTION place_bet(p_odd_id UUID, p_amount INTEGER)
@@ -121,63 +178,5 @@ BEGIN
   RETURNING id INTO v_new_bet_id;
 
   RETURN v_new_bet_id;
-END;
-$$;
-
-CREATE OR REPLACE FUNCTION claim_daily_bonus()
-RETURNS json
-LANGUAGE plpgsql
-SECURITY DEFINER -- CRUCIAL : Contourne le RLS pour mettre à jour la table 'users'
-AS $$
-DECLARE
-  v_user_id UUID;
-  v_last_login TIMESTAMPTZ;
-  v_current_streak INTEGER;
-  v_days_diff INTEGER;
-BEGIN
-  -- 1. Identifier le joueur qui fait la requête
-  v_user_id := auth.uid();
-  IF v_user_id IS NULL THEN
-    RAISE EXCEPTION 'Utilisateur non connecté.';
-  END IF;
-
-  -- 2. Récupérer son historique de connexion
-  SELECT last_logged_in, streak INTO v_last_login, v_current_streak
-  FROM users WHERE id = v_user_id FOR UPDATE;
-
-  -- 3. Si c'est sa toute première récompense (last_logged_in est vide)
-  IF v_last_login IS NULL THEN
-    UPDATE users
-    SET streak = 1, epicoins = epicoins + 100, last_logged_in = NOW()
-    WHERE id = v_user_id;
-
-    RETURN json_build_object('success', true, 'message', 'Premier bonus !', 'streak', 1, 'epicoins_won', 100);
-  END IF;
-
-  -- 4. Calculer le nombre de jours écoulés depuis la dernière récompense
-  -- On convertit en DATE pour ignorer les heures et se baser uniquement sur les jours calendaires
-  v_days_diff := (NOW() AT TIME ZONE 'UTC')::DATE - (v_last_login AT TIME ZONE 'UTC')::DATE;
-
-  -- 5. Appliquer la logique de la Streak
-  IF v_days_diff = 0 THEN
-    -- Il a déjà cliqué aujourd'hui
-    RAISE EXCEPTION 'Bonus déjà réclamé aujourd''hui. Reviens demain !';
-
-  ELSIF v_days_diff = 1 THEN
-    -- Il s'est connecté hier : on augmente la série (+1) et on donne l'argent (+100)
-    UPDATE users
-    SET streak = streak + 1, epicoins = epicoins + 100, last_logged_in = NOW()
-    WHERE id = v_user_id;
-
-    RETURN json_build_object('success', true, 'message', 'Série augmentée !', 'streak', v_current_streak + 1, 'epicoins_won', 100);
-
-  ELSE
-    -- Il a raté un ou plusieurs jours : la série est brisée, on remet à 1
-    UPDATE users
-    SET streak = 1, epicoins = epicoins + 100, last_logged_in = NOW()
-    WHERE id = v_user_id;
-
-    RETURN json_build_object('success', true, 'message', 'Série brisée, on recommence à 1.', 'streak', 1, 'epicoins_won', 100);
-  END IF;
 END;
 $$;
