@@ -17,7 +17,7 @@ BEGIN
   END IF;
 
   -- 2. Vérifier le solde de l'utilisateur
-  SELECT epicoins INTO v_current_epicoins FROM users WHERE id = v_user_id;
+  SELECT epicoins INTO v_current_epicoins FROM users WHERE id = v_user_id FOR UPDATE;
   IF v_current_epicoins < p_amount THEN
     RAISE EXCEPTION 'Solde insuffisant.';
   END IF;

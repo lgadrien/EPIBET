@@ -8,6 +8,7 @@ DROP TABLE IF EXISTS bets CASCADE;
 DROP TABLE IF EXISTS odds CASCADE;
 DROP TABLE IF EXISTS events CASCADE;
 DROP TABLE IF EXISTS users CASCADE;
+DROP VIEW IF EXISTS public_profiles CASCADE;
 DROP FUNCTION IF EXISTS place_bet;
 DROP FUNCTION IF EXISTS claim_daily_bonus;
 
@@ -105,7 +106,7 @@ BEGIN
   v_user_id := auth.uid();
   IF v_user_id IS NULL THEN RAISE EXCEPTION 'Utilisateur non connecté.'; END IF;
 
-  SELECT epicoins INTO v_current_epicoins FROM users WHERE id = v_user_id;
+  SELECT epicoins INTO v_current_epicoins FROM users WHERE id = v_user_id FOR UPDATE;
   IF v_current_epicoins < p_amount THEN RAISE EXCEPTION 'Solde insuffisant.'; END IF;
 
   SELECT e.status, o.multiplier INTO v_event_status, v_multiplier
@@ -142,7 +143,7 @@ BEGIN
 
   -- 2. Récupérer son historique de connexion
   SELECT last_logged_in, streak INTO v_last_login, v_current_streak
-  FROM users WHERE id = v_user_id;
+  FROM users WHERE id = v_user_id FOR UPDATE;
 
   -- 3. Si c'est sa toute première récompense (last_logged_in est vide)
   IF v_last_login IS NULL THEN

@@ -17,7 +17,7 @@ BEGIN
 
   -- 2. Récupérer son historique de connexion
   SELECT last_logged_in, streak INTO v_last_login, v_current_streak
-  FROM users WHERE id = v_user_id;
+  FROM users WHERE id = v_user_id FOR UPDATE;
 
   -- 3. Si c'est sa toute première récompense (last_logged_in est vide)
   IF v_last_login IS NULL THEN
