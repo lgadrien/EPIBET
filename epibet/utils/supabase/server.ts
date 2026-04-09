@@ -14,9 +14,16 @@ export async function createClient() {
         },
         setAll(cookiesToSet) {
           try {
-            cookiesToSet.forEach(({ name, value, options }) =>
-              cookieStore.set(name, value, options)
-            );
+            const rememberMe = cookieStore.get("eb_remember")?.value;
+            cookiesToSet.forEach(({ name, value, options }) => {
+              const opts = { ...options };
+              // Si la case "Se souvenir de moi" n'était pas cochée, on en fait un cookie de session
+              if (rememberMe === "false" && name.startsWith("sb-")) {
+                delete opts.maxAge;
+                delete (opts as any).expires;
+              }
+              cookieStore.set(name, value, opts);
+            });
           } catch {
             // The `setAll` method was called from a Server Component.
             // This can be ignored if you have middleware refreshing

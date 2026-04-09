@@ -6,6 +6,26 @@
   --color-epitech-black: #02040a;
   --color-epitech-gray: #0d1117;
   --color-epitech-border: #1b2333;
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-20px); }
+  }
+
+  @keyframes pulse-shadow {
+    0%, 100% { transform: scale(1); opacity: 0.2; }
+    50% { transform: scale(1.5); opacity: 0.1; }
+  }
+
+  @keyframes move-bg {
+    0% { transform: translate(0, 0); }
+    50% { transform: translate(5%, 5%); }
+    100% { transform: translate(0, 0); }
+  }
+
+  --animate-float: float 4s ease-in-out infinite;
+  --animate-pulse-shadow: pulse-shadow 4s ease-in-out infinite;
+  --animate-move-bg: move-bg 20s ease-in-out infinite;
 }
 
 :root {

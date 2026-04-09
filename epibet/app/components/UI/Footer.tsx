@@ -1,11 +1,16 @@
 import Link from "next/link";
+import { createClient } from "@/utils/supabase/server";
 
-export default function Footer() {
+export default async function Footer() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   return (
     <footer className="w-full border-t border-epitech-border bg-epitech-black py-6">
       <div className="container mx-auto flex flex-col items-center justify-between gap-4 px-4 md:flex-row lg:px-8">
         <Link
-          href="/"
+          href={user ? "/home" : "/"}
           className="text-lg font-bold tracking-tighter text-white"
         >
           EPI<span className="text-epitech-blue">BET</span>

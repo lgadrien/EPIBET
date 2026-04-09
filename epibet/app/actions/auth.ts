@@ -2,7 +2,8 @@
 
 import { createClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
-import { headers } from "next/headers";
+import { headers, cookies } from "next/headers";
+
 
 export async function signUpAction(prevState: any, formData: FormData) {
   const email = formData.get("email") as string;
@@ -46,7 +47,14 @@ export async function signUpAction(prevState: any, formData: FormData) {
 export async function signInAction(prevState: any, formData: FormData) {
   const email = formData.get("email") as string;
   const password = formData.get("password") as string;
+  const rememberMe = formData.get("remember-me") === "on";
+
+  // Sauvegarde le choix de l'utilisateur dans un cookie
+  const cookieStore = await cookies();
+  cookieStore.set("eb_remember", rememberMe ? "true" : "false", { path: "/", maxAge: 60 * 60 * 24 * 30 }); // Valable 30 jours
+
   const supabase = await createClient();
+
 
   if (!email || !password) {
     return { error: "Email et mot de passe requis." };
@@ -61,7 +69,7 @@ export async function signInAction(prevState: any, formData: FormData) {
     return { error: error.message };
   }
 
-  redirect("/");
+  redirect("/home");
 }
 
 export async function signOutAction() {

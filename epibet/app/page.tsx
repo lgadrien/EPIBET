@@ -1,3 +1,4 @@
+import Link from "next/link";
 export default function Page() {
   return (
     <div className="container mx-auto flex min-h-[calc(100vh-144px)] flex-col items-center justify-center px-4 py-20 text-center">
@@ -10,10 +11,10 @@ export default function Page() {
       </p>
       <div className="flex flex-wrap items-center justify-center gap-4">
         <button className="rounded-xl bg-epitech-blue px-8 py-4 text-lg font-bold text-white transition-all hover:bg-epitech-blue-hover active:scale-95">
-          Commencer à parier
+          <Link href="/login">Tentez de rentrer dans la légende</Link>
         </button>
         <button className="rounded-xl border border-epitech-border bg-epitech-gray px-8 py-4 text-lg font-bold text-white transition-all hover:bg-epitech-border active:scale-95">
-          Voir les matchs
+          <Link href="/classement">Voir le classement</Link>
         </button>
       </div>
     </div>

@@ -17,6 +17,8 @@ export async function middleware(request: NextRequest) {
           return request.cookies.getAll();
         },
         setAll(cookiesToSet) {
+          const rememberMe = request.cookies.get("eb_remember")?.value;
+          
           cookiesToSet.forEach(({ name, value, options }) =>
             request.cookies.set(name, value)
           );
@@ -25,9 +27,14 @@ export async function middleware(request: NextRequest) {
               headers: request.headers,
             },
           });
-          cookiesToSet.forEach(({ name, value, options }) =>
-            response.cookies.set(name, value, options)
-          );
+          cookiesToSet.forEach(({ name, value, options }) => {
+            const opts = { ...options };
+            if (rememberMe === "false" && name.startsWith("sb-")) {
+              delete opts.maxAge;
+              delete (opts as any).expires;
+            }
+            response.cookies.set(name, value, opts);
+          });
         },
       },
     }
