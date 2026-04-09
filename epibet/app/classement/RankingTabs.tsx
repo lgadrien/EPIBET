@@ -13,17 +13,15 @@ interface RankingTabsProps {
 const tabs: { id: RankingCategory; label: string; icon: any }[] = [
   { id: "global", label: "Global", icon: Crown },
   { id: "wealth", label: "Fortune", icon: Coins },
-  { id: "streak", label: "Série", icon: Zap },
+  { id: "streak", label: "Streak", icon: Zap },
 ];
 
-function RankingTabs({
-  activeTab,
-  onTabChange,
-}: RankingTabsProps) {
+function RankingTabs({ activeTab, onTabChange }: RankingTabsProps) {
   return (
     <div className="flex w-full flex-col items-center space-y-6">
       <h1 className="text-3xl font-bold tracking-tight md:text-4xl text-white">
-        Classement des <span className="text-epitech-blue">joueurs</span>
+        Classement des <span className="text-yellow-400">100</span> meilleurs
+        <span className="text-epitech-blue"> joueurs</span>
       </h1>
 
       <div className="inline-flex h-12 items-center justify-center rounded-xl bg-epitech-gray/50 p-1 backdrop-blur-sm border border-epitech-border w-full max-w-2xl">

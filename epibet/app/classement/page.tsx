@@ -3,14 +3,19 @@
 import { useEffect, useState, useMemo } from "react";
 import { createClient } from "@/utils/supabase/client";
 import RankingTabs, { RankingCategory } from "./RankingTabs";
-import RankingTable, { Profile, SortColumn, SortDirection } from "./RankingTable";
-import { Search } from "lucide-react";
+import RankingTable, {
+  Profile,
+  SortColumn,
+  SortDirection,
+} from "./RankingTable";
 
 export default function Classement() {
   const [activeTab, setActiveTab] = useState<RankingCategory>("global");
-  const [rawUsers, setRawUsers] = useState<Omit<Profile, "rank_value" | "original_rank">[]>([]);
+  const [rawUsers, setRawUsers] = useState<
+    Omit<Profile, "rank_value" | "original_rank">[]
+  >([]);
   const [loading, setLoading] = useState(true);
-  
+
   // Search & Sorting state
   const [searchQuery, setSearchQuery] = useState("");
   const [sortColumn, setSortColumn] = useState<SortColumn>("rank");
@@ -74,7 +79,7 @@ export default function Classement() {
 
     // 2. Determine absolute ranking (descending score)
     scoredData.sort((a, b) => b.rank_value - a.rank_value);
-    
+
     // Assign original_rank based on true score ranking
     const rankedData = scoredData.map((user, index) => ({
       ...user,
@@ -85,7 +90,9 @@ export default function Classement() {
     let filteredData = rankedData;
     if (searchQuery.trim() !== "") {
       const lowerQuery = searchQuery.toLowerCase();
-      filteredData = filteredData.filter((u) => u.pseudo.toLowerCase().includes(lowerQuery));
+      filteredData = filteredData.filter((u) =>
+        u.pseudo.toLowerCase().includes(lowerQuery),
+      );
     }
 
     // 4. Sort by requested column
@@ -101,20 +108,19 @@ export default function Classement() {
       return sortDirection === "asc" ? comparison : -comparison;
     });
 
-    return filteredData;
+    return filteredData.slice(0, 100);
   }, [rawUsers, activeTab, searchQuery, sortColumn, sortDirection]);
 
   return (
     <main className="container mx-auto px-4 py-12 flex flex-col items-center">
       <RankingTabs activeTab={activeTab} onTabChange={setActiveTab} />
-      
+
       {/* Search Bar */}
       <div className="w-full max-w-2xl mt-8 relative">
-        <label htmlFor="search" className="sr-only">Rechercher un joueur</label>
+        <label htmlFor="search" className="sr-only">
+          Rechercher un joueur
+        </label>
         <div className="relative group">
-          <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none">
-            <Search className="w-5 h-5 text-gray-500 group-focus-within:text-epitech-blue transition-colors" />
-          </div>
           <input
             type="text"
             id="search"
@@ -123,6 +129,17 @@ export default function Classement() {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
+          <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none z-10 text-gray-300 group-focus-within:text-epitech-blue transition-colors duration-200">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="24"
+              height="24"
+              viewBox="0 -960 960 960"
+              fill="currentColor"
+            >
+              <path d="M784-120 532-372q-30 24-69 38t-83 14q-109 0-184.5-75.5T120-580q0-109 75.5-184.5T380-840q109 0 184.5 75.5T640-580q0 44-14 83t-38 69l252 252-56 56ZM380-400q75 0 127.5-52.5T560-580q0-75-52.5-127.5T380-760q-75 0-127.5 52.5T200-580q0 75 52.5 127.5T380-400Z" />
+            </svg>
+          </div>
         </div>
       </div>
 
@@ -134,9 +151,9 @@ export default function Classement() {
           </p>
         </div>
       ) : (
-        <RankingTable 
-          data={data} 
-          category={activeTab} 
+        <RankingTable
+          data={data}
+          category={activeTab}
           sortColumn={sortColumn}
           sortDirection={sortDirection}
           onSort={handleSort}
