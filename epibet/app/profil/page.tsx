@@ -1,6 +1,6 @@
 import { createClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
-import { Flame, Coins, Calendar, Mail, Settings } from "lucide-react";
+import { Flame, Coins, Calendar, Mail, Settings, Ticket, Trophy, XCircle } from "lucide-react";
 import AvatarUpload from "./AvatarUpload";
 import EditableField from "./EditableField";
 
@@ -28,6 +28,16 @@ export default async function ProfilPage() {
       </div>
     );
   }
+
+  // Fetch bets stats
+  const { data: bets } = await supabase
+    .from("bets")
+    .select("status")
+    .eq("user_id", user.id);
+
+  const totalBets = bets?.length || 0;
+  const wonBets = bets?.filter((b) => b.status === "won").length || 0;
+  const lostBets = bets?.filter((b) => b.status === "lost").length || 0;
 
   const joinDate = new Date(profile.registration_date).toLocaleDateString(
     "fr-FR",
@@ -98,6 +108,39 @@ export default async function ProfilPage() {
               {profile.streak}{" "}
               <span className="text-lg font-normal text-gray-500">jours</span>
             </span>
+          </div>
+        </div>
+
+        {/* Statistiques de Paris */}
+        <div className="grid grid-cols-3 gap-8 mb-12 w-full max-w-lg">
+          <div className="flex flex-col items-center">
+            <div className="flex items-center gap-2 mb-1 text-gray-400">
+              <Ticket className="h-4 w-4" />
+              <span className="text-[10px] font-bold uppercase tracking-widest text-gray-500">
+                Total Paris
+              </span>
+            </div>
+            <span className="text-xl font-bold text-white">{totalBets}</span>
+          </div>
+          
+          <div className="flex flex-col items-center">
+            <div className="flex items-center gap-2 mb-1 text-green-500/80">
+              <Trophy className="h-4 w-4" />
+              <span className="text-[10px] font-bold uppercase tracking-widest text-gray-500">
+                Gagnés
+              </span>
+            </div>
+            <span className="text-xl font-bold text-green-500">{wonBets}</span>
+          </div>
+
+          <div className="flex flex-col items-center">
+            <div className="flex items-center gap-2 mb-1 text-red-500/80">
+              <XCircle className="h-4 w-4" />
+              <span className="text-[10px] font-bold uppercase tracking-widest text-gray-500">
+                Perdus
+              </span>
+            </div>
+            <span className="text-xl font-bold text-red-500">{lostBets}</span>
           </div>
         </div>
 
