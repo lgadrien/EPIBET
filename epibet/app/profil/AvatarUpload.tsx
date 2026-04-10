@@ -4,6 +4,7 @@ import React, { useState, useRef } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { Camera, Loader2, RefreshCw } from "lucide-react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 
 interface AvatarUploadProps {
   uid: string;
@@ -13,6 +14,7 @@ interface AvatarUploadProps {
 
 export default function AvatarUpload({ uid, url, pseudo }: AvatarUploadProps) {
   const supabase = createClient();
+  const router = useRouter();
   const defaultAvatar = `https://api.dicebear.com/9.x/notionists/svg?seed=${pseudo}&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf`;
   const [avatarUrl, setAvatarUrl] = useState<string>(url || defaultAvatar);
   const [uploading, setUploading] = useState(false);
@@ -32,7 +34,11 @@ export default function AvatarUpload({ uid, url, pseudo }: AvatarUploadProps) {
       
       if (updateError) throw updateError;
       
+      // Update auth metadata for immediate sync
+      await supabase.auth.updateUser({ data: { avatar_url: newUrl } });
+      
       setAvatarUrl(newUrl);
+      router.refresh(); // Refresh header
     } catch (error: any) {
       alert(error.message);
     } finally {
@@ -81,7 +87,11 @@ export default function AvatarUpload({ uid, url, pseudo }: AvatarUploadProps) {
         throw updateError;
       }
 
+      // Update auth metadata for immediate sync
+      await supabase.auth.updateUser({ data: { avatar_url: data.publicUrl } });
+
       setAvatarUrl(data.publicUrl);
+      router.refresh(); // Refresh header
     } catch (error: any) {
       alert(error.message);
     } finally {

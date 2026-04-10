@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Edit2, Check, X, Loader2 } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
+import { useRouter } from "next/navigation";
 
 interface EditableFieldProps {
   uid: string;
@@ -24,6 +25,7 @@ export default function EditableField({
   textClass = "",
 }: EditableFieldProps) {
   const supabase = createClient();
+  const router = useRouter();
   const [value, setValue] = useState(initialValue);
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -61,9 +63,14 @@ export default function EditableField({
 
         const { error: authError } = await supabase.auth.updateUser(authUpdate);
         if (authError) throw authError;
+
+        if (field === "email") {
+          alert("Un e-mail de confirmation a été envoyé à votre nouvelle adresse. Le changement sera effectif une fois confirmé.");
+        }
       }
       
       setIsEditing(false);
+      router.refresh(); // Force re-fetching Server Components like the Header
     } catch (error: any) {
       alert(`Erreur: ${error.message}`);
       setValue(initialValue);
