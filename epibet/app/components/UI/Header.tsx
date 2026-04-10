@@ -1,12 +1,29 @@
 import Link from "next/link";
 import { createClient } from "@/utils/supabase/server";
 import { signOutAction } from "@/app/actions/auth";
+import { Flame, Coins } from "lucide-react";
 
 export default async function Header() {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
+
+  let epicoins = 0;
+  let streak = 0;
+
+  if (user) {
+    const { data: profile } = await supabase
+      .from("users")
+      .select("epicoins, streak")
+      .eq("id", user.id)
+      .single();
+    
+    if (profile) {
+      epicoins = profile.epicoins ?? 0;
+      streak = profile.streak ?? 0;
+    }
+  }
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-white/10 bg-epitech-black/80 backdrop-blur-md">
@@ -48,13 +65,27 @@ export default async function Header() {
           <div className="flex justify-end items-center space-x-3 md:space-x-4">
             {user ? (
               <div className="flex items-center space-x-3 md:space-x-4">
-                <span className="text-sm text-gray-400 hidden sm:inline">
+                
+                {/* Stats: Streak & Epicoins */}
+                <div className="hidden sm:flex items-center space-x-3 mr-2">
+                  <div className="flex items-center space-x-1.5 bg-orange-500/10 border border-orange-500/20 px-2.5 py-1 rounded-full">
+                    <Flame className="w-4 h-4 text-orange-500" />
+                    <span className="text-sm font-bold text-orange-400">{streak}</span>
+                  </div>
+                  <div className="flex items-center space-x-1.5 bg-yellow-500/10 border border-yellow-500/20 px-2.5 py-1 rounded-full">
+                    <Coins className="w-4 h-4 text-yellow-500" />
+                    <span className="text-sm font-bold text-yellow-400">{epicoins.toLocaleString()}</span>
+                  </div>
+                </div>
+
+                <span className="text-sm font-medium text-gray-300 hidden md:inline">
                   {user.user_metadata.pseudo}
                 </span>
+                
                 <form action={signOutAction}>
                   <button
                     type="submit"
-                    className="rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 md:px-4 md:py-2 text-xs md:text-sm font-semibold text-white transition-all hover:bg-white/10 active:scale-95"
+                    className="rounded-lg border border-white/10 bg-white/5 md:px-4 md:py-2 px-3 py-1.5 text-xs md:text-sm font-semibold text-white transition-all hover:bg-white/10 active:scale-95"
                   >
                     Déconnexion
                   </button>
