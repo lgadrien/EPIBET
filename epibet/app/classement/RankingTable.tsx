@@ -1,14 +1,15 @@
 "use client";
 
 import { memo } from "react";
-import { RankingCategory } from "../components/UI/RankingTabs";
-import {
-  Trophy,
-  Medal,
-  ArrowUpDown,
-  ChevronUp,
+import { 
+  Trophy, 
+  Medal, 
+  ArrowUpDown, 
+  ChevronUp, 
   ChevronDown,
+  User
 } from "lucide-react";
+import { RankingCategory } from "./RankingTabs";
 
 export type SortColumn = "rank" | "pseudo" | "score";
 export type SortDirection = "asc" | "desc";
@@ -16,10 +17,11 @@ export type SortDirection = "asc" | "desc";
 export interface Profile {
   id: string;
   pseudo: string;
+  avatar_url?: string;
   streak: number;
   epicoins: number;
-  rank_value: number; // The value used for sorting in this category
-  original_rank: number; // The rank position when sorted strictly by score
+  rank_value: number; 
+  original_rank: number;
 }
 
 interface RankingTableProps {
@@ -111,38 +113,40 @@ function RankingTable({
               return (
                 <tr
                   key={player.id}
-                  className={`group transition-colors hover:bg-white/[0.03] ${rank === 1 ? "bg-epitech-blue/5" : ""}`}
+                  className={`group transition-all duration-300 hover:bg-white/[0.05] border-b border-white/[0.02] last:border-0 ${
+                    rank === 1 ? "bg-yellow-500/[0.02]" : ""
+                  }`}
                 >
-                  <td className="px-4 py-3 sm:px-6 sm:py-4">
-                    <div className="flex items-center gap-2">
-                      {rank === 1 && (
-                        <Trophy className="w-5 h-5 text-yellow-500" />
-                      )}
-                      {rank === 2 && (
-                        <Medal className="w-5 h-5 text-gray-300" />
-                      )}
-                      {rank === 3 && (
-                        <Medal className="w-5 h-5 text-amber-600" />
-                      )}
-                      {!isTopThree && (
-                        <span className="text-gray-500 font-mono">#{rank}</span>
-                      )}
+                  <td className="px-4 py-4 sm:px-6">
+                    <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-white/5 font-mono text-xs font-bold text-gray-500 group-hover:text-white transition-colors">
+                      #{rank}
                     </div>
                   </td>
-                  <td className="px-4 py-3 sm:px-6 sm:py-4">
-                    <div className="flex flex-col">
-                      <span className="font-bold text-white group-hover:text-epitech-blue transition-colors">
-                        {player.pseudo}
+                  <td className="px-4 py-4 sm:px-6">
+                    <div className="flex items-center gap-4">
+                      <div className="relative w-10 h-10 rounded-full overflow-hidden bg-white/5 border border-white/10 shrink-0">
+                        <img 
+                          src={player.avatar_url || `https://api.dicebear.com/7.x/notionists/svg?seed=${player.pseudo}`} 
+                          alt={player.pseudo} 
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="font-bold text-white group-hover:text-epitech-blue transition-colors text-sm sm:text-base">
+                          {player.pseudo}
+                        </span>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-4 py-4 sm:px-6 text-right">
+                    <div className="flex flex-col items-end">
+                      <span className="font-black text-white text-base sm:text-lg tracking-tight">
+                        {player.rank_value.toLocaleString()}
                       </span>
-                    </div>
-                  </td>
-                  <td className="px-4 py-3 sm:px-6 sm:py-4 text-right">
-                    <span className="font-mono font-bold text-epitech-blue">
-                      {player.rank_value.toLocaleString()}
-                      <span className="text-[10px] ml-1 opacity-50">
+                      <span className="text-[10px] font-bold uppercase tracking-widest text-gray-500 opacity-60">
                         {getUnit(category)}
                       </span>
-                    </span>
+                    </div>
                   </td>
                 </tr>
               );

@@ -8,6 +8,7 @@ import RankingTable, {
   SortColumn,
   SortDirection,
 } from "./RankingTable";
+import RankingPodium from "./RankingPodium";
 
 export default function Classement() {
   const [activeTab, setActiveTab] = useState<RankingCategory>("global");
@@ -26,14 +27,24 @@ export default function Classement() {
     async function fetchRankings() {
       setLoading(true);
 
-      const { data: users, error } = await supabase
+      // Tentative 1 : Avec avatar_url
+      let { data: users, error } = await supabase
         .from("public_profiles")
-        .select("id, pseudo, epicoins, streak");
+        .select("id, pseudo, epicoins, streak, avatar_url");
 
+      // Tentative 2 : Fallback si la vue n'est pas à jour
       if (error) {
-        console.error("Error fetching rankings:", error);
-        setLoading(false);
-        return;
+        console.warn("Retrying without avatar_url (view might be outdated)...");
+        const { data: fallbackUsers, error: fallbackError } = await supabase
+          .from("public_profiles")
+          .select("id, pseudo, epicoins, streak");
+        
+        if (fallbackError) {
+          console.error("Error fetching rankings:", fallbackError);
+          setLoading(false);
+          return;
+        }
+        users = fallbackUsers;
       }
 
       setRawUsers(users || []);
@@ -111,9 +122,40 @@ export default function Classement() {
     return filteredData.slice(0, 100);
   }, [rawUsers, activeTab, searchQuery, sortColumn, sortDirection]);
 
+  const topThree = useMemo(() => {
+    // Top 3 for the podium always based on the current active criteria (score)
+    // We take from the rankedData but before filtering/custom sorting
+    
+    const scoredData = rawUsers.map((user) => {
+      let rankValue = 0;
+      if (activeTab === "global") rankValue = user.epicoins + user.streak * 100;
+      else if (activeTab === "wealth") rankValue = user.epicoins;
+      else if (activeTab === "streak") rankValue = user.streak;
+
+      return { ...user, rank_value: rankValue };
+    });
+
+    scoredData.sort((a, b) => b.rank_value - a.rank_value);
+    
+    return scoredData.slice(0, 3).map((u, i) => ({
+      ...u,
+      original_rank: i + 1,
+    })) as Profile[];
+  }, [rawUsers, activeTab]);
+
+  const unit = useMemo(() => {
+    if (activeTab === "wealth") return "Epicoins";
+    if (activeTab === "streak") return "Jours";
+    return "Pts";
+  }, [activeTab]);
+
   return (
-    <main className="container mx-auto px-4 py-12 flex flex-col items-center">
+    <main className="container mx-auto px-4 py-12 flex flex-col items-center pt-24">
       <RankingTabs activeTab={activeTab} onTabChange={setActiveTab} />
+
+      {!loading && searchQuery === "" && (
+        <RankingPodium topThree={topThree} unit={unit} />
+      )}
 
       {/* Search Bar */}
       <div className="w-full max-w-2xl mt-8 relative">
