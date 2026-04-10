@@ -25,6 +25,7 @@ CREATE TABLE users (
   pseudo TEXT UNIQUE NOT NULL,
   email TEXT UNIQUE NOT NULL,
   password TEXT, -- Optionnel car géré par Supabase Auth
+  avatar_url TEXT,
   registration_date TIMESTAMPTZ DEFAULT NOW() NOT NULL,
   last_logged_in TIMESTAMPTZ,
   account_status TEXT DEFAULT 'active' NOT NULL CHECK (account_status IN ('active', 'inactive', 'banned')),
@@ -69,6 +70,7 @@ ALTER TABLE odds ENABLE ROW LEVEL SECURITY;
 ALTER TABLE bets ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "Les utilisateurs voient leur propre profil" ON users FOR SELECT USING ( auth.uid() = id );
+CREATE POLICY "Les utilisateurs peuvent mettre à jour leur profil" ON users FOR UPDATE USING ( auth.uid() = id );
 CREATE POLICY "Événements visibles par tous" ON events FOR SELECT USING ( true );
 CREATE POLICY "Cotes visibles par tous" ON odds FOR SELECT USING ( true );
 CREATE POLICY "Paris visibles par tous" ON bets FOR SELECT USING ( true );
@@ -180,3 +182,29 @@ BEGIN
   RETURN v_new_bet_id;
 END;
 $$;
+
+-- ==========================================
+-- 6. STOCKAGE (STORAGE BUCKETS & POLICIES)
+-- ==========================================
+
+INSERT INTO storage.buckets (id, name, public) 
+VALUES ('avatars', 'avatars', true)
+ON CONFLICT (id) DO UPDATE SET public = true;
+
+DROP POLICY IF EXISTS "Avatar images are publicly accessible" ON storage.objects;
+CREATE POLICY "Avatar images are publicly accessible" 
+ON storage.objects FOR SELECT 
+USING ( bucket_id = 'avatars' );
+
+DROP POLICY IF EXISTS "Authenticated users can upload avatars" ON storage.objects;
+CREATE POLICY "Authenticated users can upload avatars" 
+ON storage.objects FOR INSERT 
+TO authenticated 
+WITH CHECK ( bucket_id = 'avatars' );
+
+DROP POLICY IF EXISTS "Users can update their own avatars" ON storage.objects;
+CREATE POLICY "Users can update their own avatars"
+ON storage.objects FOR UPDATE
+TO authenticated
+USING ( bucket_id = 'avatars' );
+

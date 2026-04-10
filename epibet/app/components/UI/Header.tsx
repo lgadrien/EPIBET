@@ -2,6 +2,7 @@ import Link from "next/link";
 import { createClient } from "@/utils/supabase/server";
 import { signOutAction } from "@/app/actions/auth";
 import { Flame, Coins } from "lucide-react";
+import Image from "next/image";
 
 export default async function Header() {
   const supabase = await createClient();
@@ -11,17 +12,19 @@ export default async function Header() {
 
   let epicoins = 0;
   let streak = 0;
+  let avatarUrl = null;
 
   if (user) {
     const { data: profile } = await supabase
       .from("users")
-      .select("epicoins, streak")
+      .select("*")
       .eq("id", user.id)
       .single();
-    
+
     if (profile) {
       epicoins = profile.epicoins ?? 0;
       streak = profile.streak ?? 0;
+      avatarUrl = profile.avatar_url;
     }
   }
 
@@ -45,6 +48,14 @@ export default async function Header() {
           <nav className="hidden justify-center space-x-8 text-sm font-medium md:flex">
             {user && (
               <Link
+                href="/home"
+                className="text-gray-400 transition-colors hover:text-white"
+              >
+                Accueil
+              </Link>
+            )}
+            {user && (
+              <Link
                 href="/classement"
                 className="text-gray-400 transition-colors hover:text-white"
               >
@@ -65,23 +76,43 @@ export default async function Header() {
           <div className="flex justify-end items-center space-x-3 md:space-x-4">
             {user ? (
               <div className="flex items-center space-x-3 md:space-x-4">
-                
                 {/* Stats: Streak & Epicoins */}
                 <div className="hidden sm:flex items-center space-x-3 mr-2">
                   <div className="flex items-center space-x-1.5 bg-orange-500/10 border border-orange-500/20 px-2.5 py-1 rounded-full">
                     <Flame className="w-4 h-4 text-orange-500" />
-                    <span className="text-sm font-bold text-orange-400">{streak}</span>
+                    <span className="text-sm font-bold text-orange-400">
+                      {streak}
+                    </span>
                   </div>
                   <div className="flex items-center space-x-1.5 bg-yellow-500/10 border border-yellow-500/20 px-2.5 py-1 rounded-full">
                     <Coins className="w-4 h-4 text-yellow-500" />
-                    <span className="text-sm font-bold text-yellow-400">{epicoins.toLocaleString()}</span>
+                    <span className="text-sm font-bold text-yellow-400">
+                      {epicoins.toLocaleString()}
+                    </span>
                   </div>
                 </div>
 
-                <span className="text-sm font-medium text-gray-300 hidden md:inline">
-                  {user.user_metadata.pseudo}
-                </span>
-                
+                <Link
+                  href="/profil"
+                  className="hidden md:flex items-center space-x-2 transition-opacity hover:opacity-80"
+                >
+                  <div className="relative w-8 h-8 rounded-full overflow-hidden border border-white/20 bg-epitech-gray">
+                    <Image
+                      src={
+                        avatarUrl ||
+                        `https://api.dicebear.com/9.x/notionists/svg?seed=${user.user_metadata.pseudo}&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf`
+                      }
+                      alt="Avatar"
+                      fill
+                      className="object-cover"
+                      unoptimized={!avatarUrl}
+                    />
+                  </div>
+                  <span className="text-sm font-medium text-gray-300 hover:text-white transition-colors cursor-pointer">
+                    {user.user_metadata.pseudo}
+                  </span>
+                </Link>
+
                 <form action={signOutAction}>
                   <button
                     type="submit"
