@@ -3,29 +3,119 @@ import Link from "next/link";
 // Mock tickets data
 const TICKETS = [
   { id: 1, match: "PARIS SG vs OM", winner: "PSG", odds: 1.85, amount: 100 },
-  { id: 2, match: "REAL MADRID vs BARCA", winner: "NUL", odds: 3.2, amount: 50 },
+  {
+    id: 2,
+    match: "REAL MADRID vs BARCA",
+    winner: "NUL",
+    odds: 3.2,
+    amount: 50,
+  },
   { id: 3, match: "BAYERN vs TEK", winner: "BAYERN", odds: 1.45, amount: 200 },
-  { id: 4, match: "ARSENAL vs CHELSEA", winner: "ARSENAL", odds: 2.1, amount: 75 },
+  {
+    id: 4,
+    match: "ARSENAL vs CHELSEA",
+    winner: "ARSENAL",
+    odds: 2.1,
+    amount: 75,
+  },
   { id: 5, match: "JUVENTUS vs MILAN", winner: "MILAN", odds: 2.8, amount: 20 },
-  { id: 6, match: "LIVERPOOL vs CITY", winner: "CITY", odds: 1.95, amount: 150 },
-  { id: 7, match: "DORTMUND vs LEIPZIG", winner: "DORTMUND", odds: 2.3, amount: 80 },
-  { id: 8, match: "MAN UTD vs SPURS", winner: "MAN UTD", odds: 2.5, amount: 120 },
+  {
+    id: 6,
+    match: "LIVERPOOL vs CITY",
+    winner: "CITY",
+    odds: 1.95,
+    amount: 150,
+  },
+  {
+    id: 7,
+    match: "DORTMUND vs LEIPZIG",
+    winner: "DORTMUND",
+    odds: 2.3,
+    amount: 80,
+  },
+  {
+    id: 8,
+    match: "MAN UTD vs SPURS",
+    winner: "MAN UTD",
+    odds: 2.5,
+    amount: 120,
+  },
   { id: 9, match: "INTER vs ROMA", winner: "INTER", odds: 1.7, amount: 300 },
-  { id: 10, match: "ATLETICO vs SEVILLA", winner: "NUL", odds: 3.1, amount: 40 },
+  {
+    id: 10,
+    match: "ATLETICO vs SEVILLA",
+    winner: "NUL",
+    odds: 3.1,
+    amount: 40,
+  },
   { id: 11, match: "LYON vs MONACO", winner: "MONACO", odds: 2.4, amount: 90 },
-  { id: 12, match: "NAPOLI vs LAZIO", winner: "NAPOLI", odds: 1.9, amount: 110 },
+  {
+    id: 12,
+    match: "NAPOLI vs LAZIO",
+    winner: "NAPOLI",
+    odds: 1.9,
+    amount: 110,
+  },
   { id: 13, match: "BENFICA vs PORTO", winner: "PORTO", odds: 2.6, amount: 60 },
   { id: 14, match: "AJAX vs PSV", winner: "AJAX", odds: 2.2, amount: 100 },
-  { id: 15, match: "LEVERKUSEN vs STUTTGART", winner: "LEVERKUSEN", odds: 1.6, amount: 250 },
-  { id: 16, match: "CITY vs REAL MADRID", winner: "CITY", odds: 2.05, amount: 500 },
+  {
+    id: 15,
+    match: "LEVERKUSEN vs STUTTGART",
+    winner: "LEVERKUSEN",
+    odds: 1.6,
+    amount: 250,
+  },
+  {
+    id: 16,
+    match: "CITY vs REAL MADRID",
+    winner: "CITY",
+    odds: 2.05,
+    amount: 500,
+  },
   { id: 17, match: "PSG vs BAYERN", winner: "NUL", odds: 3.5, amount: 80 },
-  { id: 18, match: "ASTON VILLA vs NEWCASTLE", winner: "VILLA", odds: 2.7, amount: 45 },
+  {
+    id: 18,
+    match: "ASTON VILLA vs NEWCASTLE",
+    winner: "VILLA",
+    odds: 2.7,
+    amount: 45,
+  },
   { id: 19, match: "LILLE vs LENS", winner: "LILLE", odds: 2.15, amount: 130 },
-  { id: 20, match: "SPORTING vs BRAGA", winner: "SPORTING", odds: 1.55, amount: 210 },
-  { id: 21, match: "BOCA JUNIORS vs RIVER", winner: "BOCA", odds: 2.8, amount: 70 },
-  { id: 22, match: "FLAMENGO vs FLUMINENSE", winner: "FLAMENGO", odds: 1.8, amount: 160 },
-  { id: 23, match: "GALATASARAY vs FENERBAHCE", winner: "NUL", odds: 3.0, amount: 55 },
-  { id: 24, match: "CELTIC vs RANGERS", winner: "CELTIC", odds: 2.1, amount: 140 },
+  {
+    id: 20,
+    match: "SPORTING vs BRAGA",
+    winner: "SPORTING",
+    odds: 1.55,
+    amount: 210,
+  },
+  {
+    id: 21,
+    match: "BOCA JUNIORS vs RIVER",
+    winner: "BOCA",
+    odds: 2.8,
+    amount: 70,
+  },
+  {
+    id: 22,
+    match: "FLAMENGO vs FLUMINENSE",
+    winner: "FLAMENGO",
+    odds: 1.8,
+    amount: 160,
+  },
+  {
+    id: 23,
+    match: "GALATASARAY vs FENERBAHCE",
+    winner: "NUL",
+    odds: 3.0,
+    amount: 55,
+  },
+  {
+    id: 24,
+    match: "CELTIC vs RANGERS",
+    winner: "CELTIC",
+    odds: 2.1,
+    amount: 140,
+  },
 ];
 
 function BetTicket({
@@ -161,7 +251,8 @@ export default function Page() {
         </h1>
         <p className="mb-10 max-w-2xl text-lg text-gray-300 md:text-xl drop-shadow-md">
           La plateforme de paris exclusive pour les étudiants d'EPITECH. Gagnez
-          des points, grimpez le classement et prouvez votre talent.
+          des points, grimpez le classement et montrez que vous etes le
+          meilleur.
         </p>
         <div className="flex flex-wrap items-center justify-center gap-4">
           <button className="rounded-xl bg-epitech-blue px-8 py-4 text-lg font-bold text-white transition-all hover:bg-epitech-blue-hover hover:scale-105 active:scale-95 shadow-[0_0_30px_rgba(0,173,238,0.3)] hover:shadow-[0_0_40px_rgba(0,173,238,0.5)]">

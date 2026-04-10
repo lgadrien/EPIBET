@@ -72,11 +72,11 @@ function RankingTable({
   };
 
   return (
-    <div className="w-full max-w-4xl mt-8 overflow-hidden rounded-2xl border border-epitech-border bg-epitech-gray/30 backdrop-blur-sm">
-      <table className="w-full text-left">
+    <div className="w-full max-w-4xl mt-8 overflow-x-auto rounded-2xl border border-epitech-border bg-epitech-gray/30 backdrop-blur-sm">
+      <table className="w-full text-left min-w-[320px]">
         <thead>
           <tr className="border-b border-epitech-border bg-white/[0.02]">
-            <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-gray-400">
+            <th className="px-4 py-3 sm:px-6 sm:py-4 text-xs font-semibold uppercase tracking-wider text-gray-400">
               <button
                 onClick={() => onSort("rank")}
                 className="flex items-center hover:text-white transition-colors"
@@ -84,7 +84,7 @@ function RankingTable({
                 Rang {getSortIcon("rank")}
               </button>
             </th>
-            <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-gray-400">
+            <th className="px-4 py-3 sm:px-6 sm:py-4 text-xs font-semibold uppercase tracking-wider text-gray-400">
               <button
                 onClick={() => onSort("pseudo")}
                 className="flex items-center hover:text-white transition-colors"
@@ -92,7 +92,7 @@ function RankingTable({
                 Joueur {getSortIcon("pseudo")}
               </button>
             </th>
-            <th className="px-6 py-4 text-right text-xs font-semibold uppercase tracking-wider text-gray-400">
+            <th className="px-4 py-3 sm:px-6 sm:py-4 text-right text-xs font-semibold uppercase tracking-wider text-gray-400">
               <button
                 onClick={() => onSort("score")}
                 className="flex items-center justify-end w-full hover:text-white transition-colors"
@@ -113,7 +113,7 @@ function RankingTable({
                   key={player.id}
                   className={`group transition-colors hover:bg-white/[0.03] ${rank === 1 ? "bg-epitech-blue/5" : ""}`}
                 >
-                  <td className="px-6 py-4">
+                  <td className="px-4 py-3 sm:px-6 sm:py-4">
                     <div className="flex items-center gap-2">
                       {rank === 1 && (
                         <Trophy className="w-5 h-5 text-yellow-500" />
@@ -129,14 +129,14 @@ function RankingTable({
                       )}
                     </div>
                   </td>
-                  <td className="px-6 py-4">
+                  <td className="px-4 py-3 sm:px-6 sm:py-4">
                     <div className="flex flex-col">
                       <span className="font-bold text-white group-hover:text-epitech-blue transition-colors">
                         {player.pseudo}
                       </span>
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-right">
+                  <td className="px-4 py-3 sm:px-6 sm:py-4 text-right">
                     <span className="font-mono font-bold text-epitech-blue">
                       {player.rank_value.toLocaleString()}
                       <span className="text-[10px] ml-1 opacity-50">
